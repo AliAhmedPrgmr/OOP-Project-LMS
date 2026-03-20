@@ -41,7 +41,7 @@ public:
 class Teacher: public User{
 	string subject;
 public:
-	Student(string n,int i,string s):User(n,i){
+	Teacher(string n,int i,string s):User(n,i){
 		subject = s;
 		cout<<"You are successfully registered as a teacher"<<endl;
 	}
