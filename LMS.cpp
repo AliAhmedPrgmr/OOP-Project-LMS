@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
+#include <memory>
+#include <limits>
+
 using namespace std;
 //Forward declaration to resolve circular dependancy
 class Course;
@@ -37,6 +41,8 @@ public:
 	
 	string getName(){ return name;	}
 	
+	int getID() const { return id; }
+	
 	virtual ~User() {} //Destructor
 };
 //Static initialization
@@ -65,9 +71,7 @@ public:
 	
 	string getName(){return name;}
 	
-	int getID(){return id;}
-	
-	
+
 	void comment(Course* c,string s,IObserver* sender);
 	//Overloading comment function for the ease of commenting
 	//student would not need to include its own pointer while
@@ -183,6 +187,156 @@ void Teacher::addCourse(Course* c){
 	c->addTeacher(this);
 }
 
+class UserFactory {
+public:
+    static std::unique_ptr<Student> createStudentInteractive() {
+        string name; int id; float cgpa;
+        cout << "Student name: "; cin >> ws; getline(cin, name);
+        cout << "Student id: "; cin >> id;
+        cout << "Student cgpa: "; cin >> cgpa;
+        return std::make_unique<Student>(name, id, cgpa);
+    }
+
+    static std::unique_ptr<Teacher> createTeacherInteractive() {
+        string name, subject; int id;
+        cout << "Teacher name: "; cin >> ws; getline(cin, name);
+        cout << "Teacher id: "; cin >> id;
+        cout << "Teacher subject: "; cin >> ws; getline(cin, subject);
+        return std::make_unique<Teacher>(name, id, subject);
+    }
+};
+
+class LMS {
+    vector<std::unique_ptr<Student>> students;
+    vector<std::unique_ptr<Teacher>> teachers;
+    vector<std::unique_ptr<Course>> courses;
+
+    Student* findStudentById(int id) {
+        for (auto& s : students) if (s->getID() == id) return s.get();
+        return nullptr;
+    }
+
+    Teacher* findTeacherById(int id) {
+        for (auto& t : teachers) if (t->getID() == id) return t.get(); // you need getID() in Teacher
+        return nullptr;
+    }
+
+    Course* findCourseByName(const string& name) {
+        for (auto& c : courses) if (c->getCourseName() == name) return c.get();
+        return nullptr;
+    }
+
+public:
+    void run() {
+        while (true) {
+            cout << "\n===== LMS MENU =====\n"
+                 << "1) Create Student\n"
+                 << "2) Create Teacher\n"
+                 << "3) Create Course\n"
+                 << "4) Assign Course to Teacher\n"
+                 << "5) Enroll Student in Course\n"
+                 << "6) Teacher Announcement\n"
+                 << "7) Student Comment\n"
+                 << "8) List Courses\n"
+                 << "9) List Students in Course\n"
+                 << "10) List Teachers in Course\n"
+                 << "0) Exit\n"
+                 << "Choose: ";
+
+            int choice;
+            cin >> choice;
+
+            if (choice == 0) break;
+
+            if (choice == 1) {
+                students.push_back(UserFactory::createStudentInteractive());
+            }
+            else if (choice == 2) {
+                teachers.push_back(UserFactory::createTeacherInteractive());
+            }
+            else if (choice == 3) {
+                string cname;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+                courses.push_back(std::make_unique<Course>(cname));
+                cout << "Course created.\n";
+            }
+            else if (choice == 4) {
+                int tid; string cname;
+                cout << "Teacher id: "; cin >> tid;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+
+                Teacher* t = findTeacherById(tid);
+                Course* c = findCourseByName(cname);
+
+                if (!t || !c) { cout << "Teacher or course not found.\n"; continue; }
+                t->addCourse(c);
+            }
+            else if (choice == 5) {
+                int sid; string cname;
+                cout << "Student id: "; cin >> sid;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+
+                Student* s = findStudentById(sid);
+                Course* c = findCourseByName(cname);
+
+                if (!s || !c) { cout << "Student or course not found.\n"; continue; }
+                (*c) += s;
+            }
+            else if (choice == 6) {
+                int tid; string cname, msg;
+                cout << "Teacher id: "; cin >> tid;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+                cout << "Announcement: "; getline(cin, msg);
+
+                Teacher* t = findTeacherById(tid);
+                Course* c = findCourseByName(cname);
+
+                if (!t || !c) { cout << "Teacher or course not found.\n"; continue; }
+                t->announce(c, msg);
+            }
+            else if (choice == 7) {
+                int sid; string cname, msg;
+                cout << "Student id: "; cin >> sid;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+                cout << "Comment: "; getline(cin, msg);
+
+                Student* s = findStudentById(sid);
+                Course* c = findCourseByName(cname);
+
+                if (!s || !c) { cout << "Student or course not found.\n"; continue; }
+                s->comment(c, msg);
+            }
+            else if (choice == 8) {
+                cout << "\nCourses:\n";
+                for (auto& c : courses) cout << "- " << c->getCourseName() << "\n";
+            }
+            else if (choice == 9) {
+                string cname;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+                Course* c = findCourseByName(cname);
+                if (!c) { cout << "Course not found.\n"; continue; }
+                c->displayStudentList();
+            }
+            else if (choice == 10) {
+                string cname;
+                cout << "Course name: "; cin >> ws; getline(cin, cname);
+                Course* c = findCourseByName(cname);
+                if (!c) { cout << "Course not found.\n"; continue; }
+                c->displayTeacherList();
+            }
+            else {
+                cout << "Invalid choice.\n";
+            }
+        }
+    }
+};
+
+int main() {
+    LMS system;
+    system.run();
+    return 0;
+}
+/*
 int main() {
     // 1) Create teacher(s)
     Teacher t1("Ali", 986, "Maths");
@@ -250,3 +404,4 @@ int main() {
 
     return 0;
 }
+*/
