@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include <limits>
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -216,6 +218,17 @@ class LMS {
     }
 
 public:
+
+        void saveAll() {
+    saveStudentsToFile(students, "students.txt");
+    saveTeachersToFile(teachers, "teachers.txt");
+    saveCoursesToFile(courses, "courses.txt");
+}
+void loadAll() {
+     loadStudentsFromFile(students, "students.txt");
+     loadTeachersFromFile(teachers, "teachers.txt");
+     loadCoursesFromFile(courses, "courses.txt");
+}
     void run() {
         while (true) {
             cout << "\n===== LMS MENU =====\n"
@@ -319,10 +332,66 @@ public:
             }
         }
     }
+ friend void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename) 
+ friend void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename)
+ friend  void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename)
+ friend void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename)
 };
+
+
+void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename) {
+    std::ofstream ofs(filename, std::ios::trunc);
+    for (const auto& s : students) {
+        ofs << s->getName() << "," << s->getID() << "," << s->getCGPA() << std::endl;
+    }
+}
+
+void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename) {
+    std::ifstream ifs(filename);
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::stringstream ss(line);
+        std::string name, id_str, cgpa_str;
+        std::getline(ss, name, ',');
+        std::getline(ss, id_str, ',');
+        std::getline(ss, cgpa_str, ',');
+        int id = std::stoi(id_str);
+        float cgpa = std::stof(cgpa_str);
+        students.push_back(std::make_unique<Student>(name, id, cgpa));
+    }
+}
+
+        void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename) {
+    std::ofstream ofs(filename, std::ios::trunc);
+    if (!ofs) {
+        std::cerr << "Could not open file for writing: " << filename << std::endl;
+        return;
+    }
+    for (const auto& t : teachers) {
+        ofs << t->getName() << "," << t->getID() << "," << t->getSubject() << std::endl;
+    }
+}
+
+void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename) {
+    std::ifstream ifs(filename);
+    if (!ifs) return; // Not really an error first run
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::stringstream ss(line);
+        std::string name, id_str, subject;
+        std::getline(ss, name, ',');
+        std::getline(ss, id_str, ',');
+        std::getline(ss, subject); // Read rest of the line as subject (handles spaces/commas safely)
+        int id = std::stoi(id_str);
+        teachers.push_back(std::make_unique<Teacher>(name, id, subject));
+    }
+}
+
 
 int main() {
     LMS system;
-    system.run();
+    system.loadAll();    // loads all data at program start
+    system.run();        // interactive menu
+    system.saveAll();    // saves all data before exit
     return 0;
 }
