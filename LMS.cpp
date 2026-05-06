@@ -334,8 +334,10 @@ void loadAll() {
     }
  friend void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename) 
  friend void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename)
- friend  void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename)
+ friend void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename)
  friend void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename)
+ friend void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename)
+ friend void loadCoursesFromFile( vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename)
 };
 
 
@@ -384,6 +386,89 @@ void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& f
         std::getline(ss, subject); // Read rest of the line as subject (handles spaces/commas safely)
         int id = std::stoi(id_str);
         teachers.push_back(std::make_unique<Teacher>(name, id, subject));
+    }
+}
+
+
+    void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename) {
+    std::ofstream ofs(filename, std::ios::trunc);
+    if (!ofs) {
+        std::cerr << "Could not open file for writing: " << filename << std::endl;
+        return;
+    }
+    for (const auto& c : courses) {
+        ofs << c->getCourseName() << "|";
+
+        // Saving teacher IDs
+        for (size_t i = 0; i < c->teacherList.size(); ++i) {
+            if (c->teacherList[i])
+                ofs << c->teacherList[i]->getID();
+            if (i + 1 < c->teacherList.size())
+                ofs << ",";
+        }
+        ofs << "|";
+
+        // Saving student IDs
+        for (size_t i = 0; i < c->studentList.size(); ++i) {
+            if (c->studentList[i])
+                ofs << c->studentList[i]->getID();
+            if (i + 1 < c->studentList.size())
+                ofs << ",";
+        }
+        ofs << std::endl;
+    }
+}
+
+
+
+
+// You need to do ID-to-pointer lookups, so pass students/teachers by *reference*
+void loadCoursesFromFile(
+    vector<unique_ptr<Course>>& courses,
+    const vector<unique_ptr<Teacher>>& teachers,
+    const vector<unique_ptr<Student>>& students,
+    const string& filename
+) {
+    std::ifstream ifs(filename);
+    if (!ifs) return;
+
+    std::string line;
+    while (std::getline(ifs, line)) {
+        std::stringstream ss(line);
+        std::string courseName, teachersPart, studentsPart;
+        std::getline(ss, courseName, '|');
+        std::getline(ss, teachersPart, '|');
+        std::getline(ss, studentsPart);
+
+        auto course = std::make_unique<Course>(courseName);
+
+        // Attach teachers
+        if (!teachersPart.empty()) {
+            std::stringstream tss(teachersPart);
+            std::string tidstr;
+            while (std::getline(tss, tidstr, ',')) {
+                int tid = std::stoi(tidstr);
+                for (const auto& t : teachers) {
+                    if (t->getID() == tid)
+                        course->addTeacher(t.get());
+                }
+            }
+        }
+
+        // Attach students
+        if (!studentsPart.empty()) {
+            std::stringstream sss(studentsPart);
+            std::string sidstr;
+            while (std::getline(sss, sidstr, ',')) {
+                int sid = std::stoi(sidstr);
+                for (const auto& s : students) {
+                    if (s->getID() == sid)
+                        course->enrollStudent(s.get());
+                }
+            }
+        }
+
+        courses.push_back(std::move(course));
     }
 }
 
