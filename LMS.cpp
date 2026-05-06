@@ -140,6 +140,8 @@ public:
         for (auto* o : observers) if (o) o->update(sender, msg);
         cout << endl;
     }
+     friend void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename);
+ friend void loadCoursesFromFile( vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename);
 };
 
 // Definitions
@@ -363,7 +365,7 @@ void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& f
     }
 }
 
-        void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename) {
+void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename) {
     std::ofstream ofs(filename, std::ios::trunc);
     if (!ofs) {
         std::cerr << "Could not open file for writing: " << filename << std::endl;
@@ -390,7 +392,7 @@ void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& f
 }
 
 
-    void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename) {
+void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename) {
     std::ofstream ofs(filename, std::ios::trunc);
     if (!ofs) {
         std::cerr << "Could not open file for writing: " << filename << std::endl;
