@@ -332,12 +332,12 @@ void loadAll() {
             }
         }
     }
- friend void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename) 
- friend void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename)
- friend void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename)
- friend void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename)
- friend void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename)
- friend void loadCoursesFromFile( vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename)
+ friend void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename); 
+ friend void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename);
+ friend void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename);
+ friend void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename);
+ friend void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename);
+ friend void loadCoursesFromFile( vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename);
 };
 
 
