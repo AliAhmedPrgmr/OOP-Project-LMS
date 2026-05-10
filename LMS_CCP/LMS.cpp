@@ -298,8 +298,12 @@ void LMS::run() {
             c->displayTeacherList();
         }
         else if (choice == 12) {
-            auto ta = UserFactory::createTAInteractive();
-            if (ta) addTA(move(ta));
+            try {
+                auto ta = UserFactory::createTAInteractive();
+                if (ta) addTA(move(ta));
+            } catch (const exception& e) {
+                cout << "Error: " << e.what() << "\n";
+            }
         }
         else {
             cout << "Invalid choice.\n";

@@ -133,16 +133,26 @@ unique_ptr<Teacher> UserFactory::createTeacherInteractive() {
 std::unique_ptr<TeachingAssistant> UserFactory::createTAInteractive() {
     string name;
     string email;
+    int id;
 
     cout << "\n--- Teaching Assistant Registration ---" << endl;
     cout << "Enter TA Name: ";
     cin >> ws;
     getline(cin, name);
 
+    while (true) {
+        cout << "Enter TA ID: ";
+        if (cin >> id) break;
+        cout << "  [Error] Invalid ID. Please enter an integer: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
     cout << "Enter TA Email: ";
     getline(cin, email);
 
-    return make_unique<TeachingAssistant>(name, User::getTotalUsers() + 1, 0.0f, email);
+    return make_unique<TeachingAssistant>(name, id, 0.0f, email);
 }
 
 // Interactive SystemAdmin creation with robust input validation
