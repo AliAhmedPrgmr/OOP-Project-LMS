@@ -31,6 +31,12 @@ Teacher* LMS::findTeacherById(int id) {
     return nullptr;
 }
 
+TeachingAssistant* LMS::findTAById(int id) {
+    for (auto& ta : tas)
+        if (ta->getID() == id) return ta.get();
+    return nullptr;
+}
+
 SystemAdmin* LMS::findSystemAdminById(int id) {
     for (auto& a : admins) 
         if (a->getID() == id) return a.get();
@@ -58,6 +64,15 @@ void LMS::addTeacher(unique_ptr<Teacher> teacher) {
             throw DuplicateEntityException("Teacher with ID " + std::to_string(teacher->getID()) + " already exists.");
         }
         teachers.push_back(move(teacher));
+    }
+}
+
+void LMS::addTA(unique_ptr<TeachingAssistant> ta) {
+    if (ta) {
+        if (findTAById(ta->getID())) {
+            throw DuplicateEntityException("TeachingAssistant with ID " + std::to_string(ta->getID()) + " already exists.");
+        }
+        tas.push_back(move(ta));
     }
 }
 
@@ -90,6 +105,7 @@ void LMS::loadAll() {
     // Clear existing data to avoid duplicates
     students.clear();
     teachers.clear();
+    tas.clear();
     admins.clear();
     courses.clear();
     
@@ -113,6 +129,7 @@ void LMS::run() {
              << "9) List Courses\n"
              << "10) List Students in Course\n"
              << "11) List Teachers in Course\n"
+             << "12) Create Teaching Assistant\n"
              << "0) Exit\nChoice: ";
 
         int choice;
@@ -279,6 +296,14 @@ void LMS::run() {
                 continue; 
             }
             c->displayTeacherList();
+        }
+        else if (choice == 12) {
+            try {
+                auto ta = UserFactory::createTAInteractive();
+                if (ta) addTA(move(ta));
+            } catch (const exception& e) {
+                cout << "Error: " << e.what() << "\n";
+            }
         }
         else {
             cout << "Invalid choice.\n";

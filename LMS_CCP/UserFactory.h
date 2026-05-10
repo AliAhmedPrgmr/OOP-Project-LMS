@@ -6,6 +6,7 @@
 #include "Exceptions.h"
 #include "Student.h"
 #include "Teacher.h"
+#include "TeachingAssistant.h"
 #include "SystemAdmin.h"
 
 /**
@@ -26,6 +27,7 @@ public:
     // Specific interactive methods for the original types
     static std::unique_ptr<Student> createStudentInteractive();
     static std::unique_ptr<Teacher> createTeacherInteractive();
+    static std::unique_ptr<TeachingAssistant> createTAInteractive();
     static std::unique_ptr<SystemAdmin> createSystemAdminInteractive();
 
     // Direct creation methods with validation (Exception Handling)
