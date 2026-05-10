@@ -16,4 +16,5 @@ public:
     void announce(Course* c, const std::string& msg);
     void setSubject(const std::string& s);
     const std::string& getSubject() const;
+    const std::vector<Course*>& getManagedCourses() const { return managedCourses; }
 };
