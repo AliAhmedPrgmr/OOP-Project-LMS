@@ -4,6 +4,10 @@
 
 using namespace std;
 
+namespace {
+constexpr float DEFAULT_TA_CGPA = 0.0f;
+}
+
 // Static member initialization
 bool UserFactory::defaultsRegistered = false;
 
@@ -152,7 +156,7 @@ std::unique_ptr<TeachingAssistant> UserFactory::createTAInteractive() {
     cout << "Enter TA Email: ";
     getline(cin, email);
 
-    return make_unique<TeachingAssistant>(name, id, 0.0f, email);
+    return make_unique<TeachingAssistant>(name, id, DEFAULT_TA_CGPA, email);
 }
 
 // Interactive SystemAdmin creation with robust input validation
