@@ -285,6 +285,3 @@ void LMS::run() {
         }
     }
 }
-
-    return 0;
-}
