@@ -49,3 +49,7 @@ void Student::comment(Course* c, const string& msg, IObserver* sender) {
 void Student::comment(Course* c, const string& msg) { 
     comment(c, msg, this); 
 }
+
+void Student::addGrade(double score) {
+    grades.add(score);
+}
