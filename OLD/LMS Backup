@@ -1,0 +1,452 @@
+// Improved LMS.cpp
+#include "LMS.h"
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <limits>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+// Forward declarations
+class Course;
+class Teacher;
+class Student;
+
+// ==========================================
+// 1. Observer interface
+// ==========================================
+class IObserver {
+public:
+    virtual void update(IObserver* sender, const string& message) = 0;
+    virtual ~IObserver() {}
+};
+
+// ==========================================
+// 2. Abstract User class
+// ==========================================
+class User : public IObserver {
+private:
+    static int totalUsers;
+    string name;
+    const int id;
+public:
+    User(const string& n, int i) : name(n), id(i) { totalUsers++; }
+    void update(IObserver* sender, const string& message) override {
+        if (this != sender)
+            cout << "  > " << name << ": " << message << endl;
+    }
+    virtual void displayDashboard() const = 0;
+    static int getTotalUsers() { return totalUsers; }
+    const string& getName() const { return name; }
+    int getID() const { return id; }
+    virtual ~User() {}
+};
+int User::totalUsers = 0;
+
+// ==========================================
+// 3. Student class
+// ==========================================
+class Student : public User {
+private:
+    float cgpa;
+public:
+    Student(const string& n, int i, float c) : User(n,i), cgpa(c) {}
+    void displayDashboard() const override {
+        cout << "==== Student Portal ====" << endl;
+        cout << "Name: " << getName() << "\nID: " << getID() << "\nCGPA: " << cgpa << endl;
+    }
+    void setCGPA(float n) { if (n >= 0.0 && n <= 4.0) cgpa = n; }
+    float getCGPA() const { return cgpa; }
+
+    void comment(Course* c, const string& msg, IObserver* sender);
+    void comment(Course* c, const string& msg) { comment(c, msg, this); }
+};
+
+// ==========================================
+// 4. Teacher class
+// ==========================================
+class Teacher : public User {
+private:
+    string subject;
+    vector<Course*> managedCourses;
+public:
+    Teacher(const string& n, int i, const string& s) : User(n, i), subject(s) {}
+    void addCourse(Course* c);
+    void displayDashboard() const override; 
+    void announce(Course* c, const string& msg, IObserver* sender);
+    void announce(Course* c, const string& msg) { announce(c, msg, this); }
+    void setSubject(const string& s) { subject = s; }
+    const string& getSubject() const { return subject; }
+};
+
+// ==========================================
+// 5. Course class
+// ==========================================
+class Course {
+private:
+    string courseName;
+    vector<Student*> studentList;
+    vector<Teacher*> teacherList;
+    vector<IObserver*> observers;
+
+public:
+    Course(const string& n) : courseName(n) {}
+    const string& getCourseName() const { return courseName; }
+    ~Course() { observers.clear(); }
+
+    void enrollStudent(Student* s) {
+        if (s) {
+            for (auto* st : studentList)
+                if (st == s) return;  // Already enrolled
+            observers.push_back(s);
+            studentList.push_back(s);
+        }
+    }
+    void addTeacher(Teacher* t) {
+        if (t) {
+            for (auto* tch : teacherList)
+                if (tch == t) return;  // Already assigned
+            observers.push_back(t);
+            teacherList.push_back(t);
+        }
+    }
+    void displayStudentList() const {
+        if (studentList.empty()) { cout << "(No students enrolled)\n"; return; }
+        for (const auto* s : studentList) if (s) cout << "- " << s->getName() << endl;
+    }
+    void displayTeacherList() const {
+        if (teacherList.empty()) { cout << "(No teachers assigned)\n"; return; }
+        for (const auto* t : teacherList) if (t) cout << "- " << t->getName() << " (" << t->getSubject() << ")" << endl;
+    }
+    void post(IObserver* sender, const string& msg) {
+        for (auto* o : observers) if (o) o->update(sender, msg);
+    }
+
+    friend void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename);
+    friend void loadCoursesFromFile(vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename);
+};
+
+void Teacher::displayDashboard() const {
+    cout << "==== Teacher Portal ====" << endl;
+    cout << "Teacher: " << getName() << " | Subject: " << subject << endl;
+    cout << "Courses: " << managedCourses.size() << endl;
+    for (const auto* course : managedCourses) {
+        if (course) cout << "  - " << course->getCourseName() << endl;
+    }
+}
+
+void Student::comment(Course* c, const string& msg, IObserver* sender) {
+    if (c) c->post(sender, msg);
+}
+void Teacher::announce(Course* c, const string& msg, IObserver* sender) {
+    if (c) c->post(sender, msg);
+}
+void Teacher::addCourse(Course* c) {
+    if (c) {
+        for (auto* crs : managedCourses)
+            if (crs == c) return;
+        managedCourses.push_back(c);
+        c->addTeacher(this);
+    }
+}
+
+// ==========================================
+// 6. UserFactory (OCP Principle)
+// ==========================================
+class UserFactory {
+public:
+    static unique_ptr<Student> createStudentInteractive() {
+        string name; int id; float cgpa;
+        cout << "Student name: "; cin >> ws; getline(cin, name);
+        while (true) {
+            cout << "Student id: "; 
+            if (cin >> id) break;
+            cout << "  Invalid input. Enter an integer: ";
+            cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        while (true) {
+            cout << "Student CGPA (0-4): ";
+            if (cin >> cgpa && cgpa >= 0 && cgpa <= 4) break;
+            cout << "  Invalid CGPA. Must be between 0 and 4." << endl;
+            cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        return make_unique<Student>(name, id, cgpa);
+    }
+    static unique_ptr<Teacher> createTeacherInteractive() {
+        string name, subject; int id;
+        cout << "Teacher name: "; cin >> ws; getline(cin, name);
+        while (true) {
+            cout << "Teacher id: ";
+            if (cin >> id) break;
+            cout << "  Invalid input. Enter an integer: ";
+            cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+        cout << "Teacher subject: "; cin >> ws; getline(cin, subject);
+        return make_unique<Teacher>(name, id, subject);
+    }
+};
+
+// ==========================================
+// 7. File IO functions
+// ==========================================
+void saveStudentsToFile(const vector<unique_ptr<Student>>& students, const string& filename) {
+    ofstream ofs(filename, ios::trunc);
+    for (const auto& s : students) {
+        ofs << s->getName() << "," << s->getID() << "," << s->getCGPA() << endl;
+    }
+}
+
+void loadStudentsFromFile(vector<unique_ptr<Student>>& students, const string& filename) {
+    ifstream ifs(filename);
+    if (!ifs) return;
+    string line;
+    while (getline(ifs, line)) {
+        stringstream ss(line);
+        string name, id_str, cgpa_str;
+        getline(ss, name, ',');
+        getline(ss, id_str, ',');
+        getline(ss, cgpa_str, ',');
+        if(!id_str.empty()) {
+            try {
+                students.push_back(make_unique<Student>(name, stoi(id_str), stof(cgpa_str)));
+            } catch (...) {}
+        }
+    }
+}
+
+void saveTeachersToFile(const vector<unique_ptr<Teacher>>& teachers, const string& filename) {
+    ofstream ofs(filename, ios::trunc);
+    if (!ofs) return;
+    for (const auto& t : teachers) {
+        ofs << t->getName() << "," << t->getID() << "," << t->getSubject() << endl;
+    }
+}
+
+void loadTeachersFromFile(vector<unique_ptr<Teacher>>& teachers, const string& filename) {
+    ifstream ifs(filename);
+    if (!ifs) return;
+    string line;
+    while (getline(ifs, line)) {
+        stringstream ss(line);
+        string name, id_str, subject;
+        getline(ss, name, ',');
+        getline(ss, id_str, ',');
+        getline(ss, subject);
+        if(!id_str.empty()) {
+            try {
+                teachers.push_back(make_unique<Teacher>(name, stoi(id_str), subject));
+            } catch (...) {}
+        }
+    }
+}
+
+void saveCoursesToFile(const vector<unique_ptr<Course>>& courses, const string& filename) {
+    ofstream ofs(filename, ios::trunc);
+    if (!ofs) return;
+    for (const auto& c : courses) {
+        ofs << c->getCourseName() << "|";
+        for (size_t i = 0; i < c->teacherList.size(); ++i) {
+            if (c->teacherList[i]) ofs << c->teacherList[i]->getID();
+            if (i + 1 < c->teacherList.size()) ofs << ",";
+        }
+        ofs << "|";
+        for (size_t i = 0; i < c->studentList.size(); ++i) {
+            if (c->studentList[i]) ofs << c->studentList[i]->getID();
+            if (i + 1 < c->studentList.size()) ofs << ",";
+        }
+        ofs << endl;
+    }
+}
+
+void loadCoursesFromFile(vector<unique_ptr<Course>>& courses, const vector<unique_ptr<Teacher>>& teachers, const vector<unique_ptr<Student>>& students, const string& filename) {
+    ifstream ifs(filename);
+    if (!ifs) return;
+    string line;
+    while (getline(ifs, line)) {
+        stringstream ss(line);
+        string courseName, teachersPart, studentsPart;
+        getline(ss, courseName, '|');
+        getline(ss, teachersPart, '|');
+        getline(ss, studentsPart);
+        auto course = make_unique<Course>(courseName);
+        if (!teachersPart.empty()) {
+            stringstream tss(teachersPart); string tidstr;
+            while (getline(tss, tidstr, ',')) {
+                try {
+                    int tid = stoi(tidstr);
+                    for (const auto& t : teachers) if (t->getID() == tid) course->addTeacher(t.get());
+                } catch (...) {}
+            }
+        }
+        if (!studentsPart.empty()) {
+            stringstream sss(studentsPart); string sidstr;
+            while (getline(sss, sidstr, ',')) {
+                try {
+                    int sid = stoi(sidstr);
+                    for (const auto& s : students) if (s->getID() == sid) course->enrollStudent(s.get());
+                } catch (...) {}
+            }
+        }
+        courses.push_back(move(course));
+    }
+}
+
+// ==========================================
+// 8. LMS Singleton Class
+// ==========================================
+class LMS {
+private:
+    vector<unique_ptr<Student>> students;
+    vector<unique_ptr<Teacher>> teachers;
+    vector<unique_ptr<Course>> courses;
+
+    LMS() {} // Private constructor for Singleton
+
+    Student* findStudentById(int id) {
+        for (auto& s : students) if (s->getID() == id) return s.get();
+        return nullptr;
+    }
+    Teacher* findTeacherById(int id) {
+        for (auto& t : teachers) if (t->getID() == id) return t.get();
+        return nullptr;
+    }
+    Course* findCourseByName(const string& name) {
+        for (auto& c : courses) if (c->getCourseName() == name) return c.get();
+        return nullptr;
+    }
+
+public:
+    static LMS& getInstance() {
+        static LMS instance;
+        return instance;
+    }
+
+    void saveAll() {
+        saveStudentsToFile(students, "students.txt");
+        saveTeachersToFile(teachers, "teachers.txt");
+        saveCoursesToFile(courses, "courses.txt");
+    }
+    void loadAll() {
+        students.clear();
+        teachers.clear();
+        courses.clear();
+        loadStudentsFromFile(students, "students.txt");
+        loadTeachersFromFile(teachers, "teachers.txt");
+        loadCoursesFromFile(courses, teachers, students, "courses.txt");
+    }
+
+    void run() {
+        while (true) {
+            cout << "\n===== LMS MENU =====\n"
+                 << "1) Create Student\n2) Create Teacher\n3) Create Course\n"
+                 << "4) Assign Course to Teacher\n5) Enroll Student in Course\n"
+                 << "6) Teacher Announcement\n7) Student Comment\n8) List Courses\n"
+                 << "9) List Students in Course\n10) List Teachers in Course\n0) Exit\nChoose: ";
+
+            int choice;
+            if (!(cin >> choice)) {
+                cout << "Please enter a valid menu number.\n";
+                cin.clear(); cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                continue;
+            }
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+
+            if (choice == 0) break;
+
+            if (choice == 1) {
+                students.push_back(UserFactory::createStudentInteractive());
+            }
+            else if (choice == 2) {
+                teachers.push_back(UserFactory::createTeacherInteractive());
+            }
+            else if (choice == 3) {
+                string cname;
+                cout << "Course name: "; getline(cin, cname);
+                if (!cname.empty() && !findCourseByName(cname)) {
+                    courses.push_back(make_unique<Course>(cname));
+                    cout << "Created: " << cname << "\n";
+                } else cout << "Invalid or duplicate course name.\n";
+            }
+            else if (choice == 4) {
+                int tid; string cname;
+                cout << "Teacher id: "; cin >> tid; cin.ignore();
+                cout << "Course name: "; getline(cin, cname);
+                Teacher* t = findTeacherById(tid);
+                Course* c = findCourseByName(cname);
+                if (!t || !c) { cout << "Teacher or course not found.\n"; continue; }
+                t->addCourse(c);
+            }
+            else if (choice == 5) {
+                int sid; string cname;
+                cout << "Student id: "; cin >> sid; cin.ignore();
+                cout << "Course name: "; getline(cin, cname);
+                Student* s = findStudentById(sid);
+                Course* c = findCourseByName(cname);
+                if (!s || !c) { cout << "Student or course not found.\n"; continue; }
+                c->enrollStudent(s);
+            }
+            else if (choice == 6) {
+                int tid; string cname, msg;
+                cout << "Teacher id: "; cin >> tid; cin.ignore();
+                cout << "Course name: "; getline(cin, cname);
+                cout << "Announcement: "; getline(cin, msg);
+                Teacher* t = findTeacherById(tid);
+                Course* c = findCourseByName(cname);
+                if (!t || !c) { cout << "Teacher or course not found.\n"; continue; }
+                t->announce(c, msg);
+            }
+            else if (choice == 7) {
+                int sid; string cname, msg;
+                cout << "Student id: "; cin >> sid; cin.ignore();
+                cout << "Course name: "; getline(cin, cname);
+                cout << "Comment: "; getline(cin, msg);
+                Student* s = findStudentById(sid);
+                Course* c = findCourseByName(cname);
+                if (!s || !c) { cout << "Student or course not found.\n"; continue; }
+                s->comment(c, msg);
+            }
+            else if (choice == 8) {
+                if (courses.empty()) {
+                    cout << "No courses available.\n";
+                } else {
+                    cout << "\nCourses:\n";
+                    for (const auto& c : courses) cout << "  - " << c->getCourseName() << endl;
+                }
+            }
+            else if (choice == 9) {
+                string cname;
+                cout << "Course name: "; getline(cin, cname);
+                Course* c = findCourseByName(cname);
+                if (!c) { cout << "Course not found.\n"; continue; }
+                c->displayStudentList();
+            }
+            else if (choice == 10) {
+                string cname;
+                cout << "Course name: "; getline(cin, cname);
+                Course* c = findCourseByName(cname);
+                if (!c) { cout << "Course not found.\n"; continue; }
+                c->displayTeacherList();
+            }
+        }
+    }
+};
+
+// ==========================================
+// 9. Final main function
+// ==========================================
+int main() {
+    try {
+        LMS::getInstance().loadAll(); 
+        cout << "=== Learning Management System ===" << endl;
+        LMS::getInstance().run(); 
+        LMS::getInstance().saveAll(); 
+        cout << "Exiting..." << endl;
+    } catch (const std::exception& e) {
+        cerr << "ERROR: " << e.what() << endl;
+        return 1;
+    }
+    return 0;
+}
