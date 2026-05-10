@@ -61,6 +61,17 @@ void LMS::addTeacher(unique_ptr<Teacher> teacher) {
     }
 }
 
+void LMS::addTA(unique_ptr<TeachingAssistant> ta) {
+    if (ta) {
+        for (const auto& existing : tas) {
+            if (existing->getID() == ta->getID()) {
+                throw DuplicateEntityException("TeachingAssistant with ID " + std::to_string(ta->getID()) + " already exists.");
+            }
+        }
+        tas.push_back(move(ta));
+    }
+}
+
 void LMS::addSystemAdmin(unique_ptr<SystemAdmin> admin) {
     if (admin) {
         if (findSystemAdminById(admin->getID())) {
@@ -90,6 +101,7 @@ void LMS::loadAll() {
     // Clear existing data to avoid duplicates
     students.clear();
     teachers.clear();
+    tas.clear();
     admins.clear();
     courses.clear();
     
@@ -113,6 +125,7 @@ void LMS::run() {
              << "9) List Courses\n"
              << "10) List Students in Course\n"
              << "11) List Teachers in Course\n"
+             << "12) Create Teaching Assistant\n"
              << "0) Exit\nChoice: ";
 
         int choice;
@@ -279,6 +292,10 @@ void LMS::run() {
                 continue; 
             }
             c->displayTeacherList();
+        }
+        else if (choice == 12) {
+            auto ta = UserFactory::createTAInteractive();
+            if (ta) addTA(move(ta));
         }
         else {
             cout << "Invalid choice.\n";

@@ -4,7 +4,7 @@
 
 class Course;
 
-class Teacher : public User {
+class Teacher : virtual public User {
 private:
     std::string subject;
     std::vector<Course*> managedCourses;

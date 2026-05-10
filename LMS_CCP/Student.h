@@ -1,9 +1,9 @@
 #pragma once
 #include "User.h"
-#include "DynamicArray"
+#include "DynamicArray.h"
 class Course;
 
-class Student : public User {
+class Student : virtual public User {
 private:
     float cgpa;
     DynamicArray<double> grades;

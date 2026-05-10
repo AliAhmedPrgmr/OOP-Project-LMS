@@ -4,6 +4,7 @@
 #include <string>
 #include "Student.h"
 #include "Teacher.h"
+#include "TeachingAssistant.h"
 #include "SystemAdmin.h"
 #include "Course.h"
 #include "FileIO.h"
@@ -18,6 +19,7 @@ private:
     // Core data storage using smart pointers
     std::vector<std::unique_ptr<Student>> students;
     std::vector<std::unique_ptr<Teacher>> teachers;
+    std::vector<std::unique_ptr<TeachingAssistant>> tas;
     std::vector<std::unique_ptr<SystemAdmin>> admins;
     std::vector<std::unique_ptr<Course>> courses;
 
@@ -49,6 +51,7 @@ public:
     // Methods to add entities with validation/exception handling
     void addStudent(std::unique_ptr<Student> student);
     void addTeacher(std::unique_ptr<Teacher> teacher);
+    void addTA(std::unique_ptr<TeachingAssistant> ta);
     void addSystemAdmin(std::unique_ptr<SystemAdmin> admin);
     void addCourse(std::unique_ptr<Course> course);
 };

@@ -129,6 +129,22 @@ unique_ptr<Teacher> UserFactory::createTeacherInteractive() {
     return createTeacher(name, id, subject);
 }
 
+// Interactive TeachingAssistant creation with robust input validation
+std::unique_ptr<TeachingAssistant> UserFactory::createTAInteractive() {
+    string name;
+    string email;
+
+    cout << "\n--- Teaching Assistant Registration ---" << endl;
+    cout << "Enter TA Name: ";
+    cin >> ws;
+    getline(cin, name);
+
+    cout << "Enter TA Email: ";
+    getline(cin, email);
+
+    return make_unique<TeachingAssistant>(name, User::getTotalUsers() + 1, 0.0f, email);
+}
+
 // Interactive SystemAdmin creation with robust input validation
 std::unique_ptr<SystemAdmin> UserFactory::createSystemAdminInteractive() {
     std::string name;
