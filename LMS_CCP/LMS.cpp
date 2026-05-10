@@ -31,6 +31,12 @@ Teacher* LMS::findTeacherById(int id) {
     return nullptr;
 }
 
+TeachingAssistant* LMS::findTAById(int id) {
+    for (auto& ta : tas)
+        if (ta->getID() == id) return ta.get();
+    return nullptr;
+}
+
 SystemAdmin* LMS::findSystemAdminById(int id) {
     for (auto& a : admins) 
         if (a->getID() == id) return a.get();
@@ -63,10 +69,8 @@ void LMS::addTeacher(unique_ptr<Teacher> teacher) {
 
 void LMS::addTA(unique_ptr<TeachingAssistant> ta) {
     if (ta) {
-        for (const auto& existing : tas) {
-            if (existing->getID() == ta->getID()) {
-                throw DuplicateEntityException("TeachingAssistant with ID " + std::to_string(ta->getID()) + " already exists.");
-            }
+        if (findTAById(ta->getID())) {
+            throw DuplicateEntityException("TeachingAssistant with ID " + std::to_string(ta->getID()) + " already exists.");
         }
         tas.push_back(move(ta));
     }

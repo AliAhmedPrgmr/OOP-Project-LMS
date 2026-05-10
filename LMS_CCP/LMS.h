@@ -26,6 +26,7 @@ private:
     // Private helper methods for internal lookup
     Student* findStudentById(int id);
     Teacher* findTeacherById(int id);
+    TeachingAssistant* findTAById(int id);
     SystemAdmin* findSystemAdminById(int id);
     Course* findCourseByName(const std::string& name);
 
