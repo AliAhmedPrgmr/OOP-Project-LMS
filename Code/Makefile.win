@@ -1,0 +1,55 @@
+# Project: LMS
+# Makefile created by Embarcadero Dev-C++ 6.3
+
+CPP      = g++.exe -D__DEBUG__
+CC       = gcc.exe -D__DEBUG__
+WINDRES  = windres.exe
+OBJ      = main.o Course.o FileIO.o LMS.o Student.o SystemAdmin.o Teacher.o TeachingAssistant.o User.o UserFactory.o
+LINKOBJ  = main.o Course.o FileIO.o LMS.o Student.o SystemAdmin.o Teacher.o TeachingAssistant.o User.o UserFactory.o
+LIBS     = -L"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib" -L"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/lib" -static-libgcc -g3
+INCS     = -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include"
+CXXINCS  = -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/x86_64-w64-mingw32/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include" -I"C:/Program Files (x86)/Embarcadero/Dev-Cpp/TDM-GCC-64/lib/gcc/x86_64-w64-mingw32/9.2.0/include/c++"
+BIN      = LMS.exe
+CXXFLAGS = $(CXXINCS) -g3
+CFLAGS   = $(INCS) -g3
+DEL      = C:\Program Files (x86)\Embarcadero\Dev-Cpp\DevCpp.exe INTERNAL_DEL
+
+.PHONY: all all-before all-after clean clean-custom
+
+all: all-before $(BIN) all-after
+
+clean: clean-custom
+	${DEL} $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(CPP) $(LINKOBJ) -o $(BIN) $(LIBS)
+
+main.o: main.cpp
+	$(CPP) -c main.cpp -o main.o $(CXXFLAGS)
+
+Course.o: Course.cpp
+	$(CPP) -c Course.cpp -o Course.o $(CXXFLAGS)
+
+FileIO.o: FileIO.cpp
+	$(CPP) -c FileIO.cpp -o FileIO.o $(CXXFLAGS)
+
+LMS.o: LMS.cpp
+	$(CPP) -c LMS.cpp -o LMS.o $(CXXFLAGS)
+
+Student.o: Student.cpp
+	$(CPP) -c Student.cpp -o Student.o $(CXXFLAGS)
+
+SystemAdmin.o: SystemAdmin.cpp
+	$(CPP) -c SystemAdmin.cpp -o SystemAdmin.o $(CXXFLAGS)
+
+Teacher.o: Teacher.cpp
+	$(CPP) -c Teacher.cpp -o Teacher.o $(CXXFLAGS)
+
+TeachingAssistant.o: TeachingAssistant.cpp
+	$(CPP) -c TeachingAssistant.cpp -o TeachingAssistant.o $(CXXFLAGS)
+
+User.o: User.cpp
+	$(CPP) -c User.cpp -o User.o $(CXXFLAGS)
+
+UserFactory.o: UserFactory.cpp
+	$(CPP) -c UserFactory.cpp -o UserFactory.o $(CXXFLAGS)
